@@ -1,0 +1,64 @@
+/* ─── myPaisaa Global Styles ─────────────────────────────────────────────── */
+
+/* Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ─── CSS Design Tokens ───────────────────────────────────────────────────── */
+:root {
+  --color-primary:       #2e7d32;
+  --color-primary-dark:  #1b5e20;
+  --color-primary-rgb:   46, 125, 50;
+
+  --color-danger:        #d32f2f;
+  --color-warning:       #f57c00;
+  --color-success:       #388e3c;
+
+  --color-bg:            #f4f6f4;
+  --color-surface:       #ffffff;
+  --color-border:        #e0e7e0;
+
+  --color-text-primary:  #1a2e1a;
+  --color-text-secondary:#5a6e5a;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+/* ─── Reset & Base ────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  margin: 0;
+  line-height: 1.25;
+}
+
+button {
+  font-family: inherit;
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}

@@ -1,0 +1,234 @@
+<!-- Screen 1: Book / Update / Edit Booking -->
+<div class="page-container">
+  <header class="page-header">
+    <div class="header-icon">🚌</div>
+    <div>
+      <h1 class="page-title">Book Your Seat</h1>
+      <p class="page-subtitle">Select date, enter mobile & pick your seats</p>
+    </div>
+  </header>
+
+  <!-- ── Edit Mode Banner ──────────────────────────────────────────────── -->
+  <div class="edit-banner" *ngIf="editBookingId">
+    <span class="edit-icon">✏️</span>
+    <span>Editing Booking <strong>#{{ editBookingId }}</strong></span>
+    <button class="btn-text-danger" (click)="clearEdit()">Cancel Edit</button>
+  </div>
+
+  <!-- ── Booking Form ──────────────────────────────────────────────────── -->
+  <form [formGroup]="bookingForm" (ngSubmit)="onSubmit()" class="booking-card" novalidate>
+
+    <div class="form-grid">
+      <!-- Travel Date -->
+      <div class="form-group">
+        <label class="form-label" for="travelDate">
+          <span class="label-icon">📅</span> Travel Date <span class="required">*</span>
+        </label>
+        <input
+          id="travelDate"
+          type="date"
+          class="form-control"
+          formControlName="travelDate"
+          [min]="todayStr"
+          [class.is-invalid]="bookingForm.get('travelDate')!.invalid && bookingForm.get('travelDate')!.touched"
+        />
+        <div class="invalid-feedback" *ngIf="bookingForm.get('travelDate')!.invalid && bookingForm.get('travelDate')!.touched">
+          Travel date is required.
+        </div>
+      </div>
+
+      <!-- Mobile -->
+      <div class="form-group">
+        <label class="form-label" for="mobile">
+          <span class="label-icon">📱</span> Mobile Number <span class="required">*</span>
+        </label>
+        <input
+          id="mobile"
+          type="tel"
+          class="form-control"
+          formControlName="mobile"
+          placeholder="10-digit mobile number"
+          maxlength="10"
+          [class.is-invalid]="bookingForm.get('mobile')!.invalid && bookingForm.get('mobile')!.touched"
+        />
+        <div class="invalid-feedback" *ngIf="bookingForm.get('mobile')!.errors?.['required'] && bookingForm.get('mobile')!.touched">
+          Mobile number is required.
+        </div>
+        <div class="invalid-feedback" *ngIf="bookingForm.get('mobile')!.errors?.['pattern'] && bookingForm.get('mobile')!.touched">
+          Must be exactly 10 digits.
+        </div>
+      </div>
+
+      <!-- Booking ID for Edit -->
+      <div class="form-group full-width">
+        <label class="form-label" for="bookingId">
+          <span class="label-icon">🔍</span> Booking ID <span class="hint">(for editing an existing booking)</span>
+        </label>
+        <div class="input-row">
+          <input
+            id="bookingId"
+            type="text"
+            class="form-control"
+            formControlName="bookingId"
+            placeholder="e.g. A1B2C3D4"
+            style="text-transform: uppercase"
+          />
+          <button
+            type="button"
+            class="btn btn-outline"
+            (click)="loadBookingForEdit()"
+            [disabled]="isLoading"
+          >
+            Load Booking
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Error / Info Messages ────────────────────────────────────────── -->
+    <div class="alert alert-error" *ngIf="errorMessage">
+      <span>⚠️</span> {{ errorMessage }}
+    </div>
+
+    <!-- ── Seat Layout ───────────────────────────────────────────────────── -->
+    <div class="seat-section">
+      <div class="seat-section-header">
+        <h2 class="section-title">Seat Selection</h2>
+        <div class="seat-counter">
+          <span class="counter-selected">{{ selectedSeats.size }}</span>
+          <span class="counter-divider">/</span>
+          <span class="counter-max">{{ maxSeats }}</span>
+          <span class="counter-label">seats selected</span>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="seat-legend">
+        <div class="legend-item">
+          <div class="seat-demo available"></div><span>Available</span>
+        </div>
+        <div class="legend-item">
+          <div class="seat-demo selected"></div><span>Selected</span>
+        </div>
+        <div class="legend-item">
+          <div class="seat-demo booked"></div><span>Booked</span>
+        </div>
+      </div>
+
+      <div class="bus-container" *ngIf="!isLoading; else loadingTpl">
+        <!-- Column Headers -->
+        <div class="bus-header">
+          <div class="row-num-spacer"></div>
+          <div class="col-headers">
+            <span class="col-header">A</span>
+            <span class="col-header">B</span>
+          </div>
+          <div class="aisle-spacer"></div>
+          <div class="col-headers">
+            <span class="col-header">C</span>
+            <span class="col-header">D</span>
+          </div>
+        </div>
+
+        <!-- Rows -->
+        <div class="bus-body">
+          <div class="seat-row" *ngFor="let row of seatLayout; let i = index">
+            <span class="row-num">{{ i + 1 }}</span>
+            <!-- Left pair (A, B) -->
+            <div class="seat-pair">
+              <button
+                type="button"
+                class="seat"
+                *ngFor="let seat of leftPair(row)"
+                [class.seat--booked]="seat.isBooked"
+                [class.seat--selected]="isSeatSelected(seat.seatId)"
+                [disabled]="seat.isBooked"
+                (click)="toggleSeat(seat)"
+                [title]="seat.seatId + (seat.isBooked ? ' (Booked)' : '')"
+                [attr.aria-label]="seat.seatId + (seat.isBooked ? ' booked' : isSeatSelected(seat.seatId) ? ' selected' : ' available')"
+              >
+                {{ seat.seatId }}
+              </button>
+            </div>
+            <!-- Aisle -->
+            <div class="aisle"></div>
+            <!-- Right pair (C, D) -->
+            <div class="seat-pair">
+              <button
+                type="button"
+                class="seat"
+                *ngFor="let seat of rightPair(row)"
+                [class.seat--booked]="seat.isBooked"
+                [class.seat--selected]="isSeatSelected(seat.seatId)"
+                [disabled]="seat.isBooked"
+                (click)="toggleSeat(seat)"
+                [title]="seat.seatId + (seat.isBooked ? ' (Booked)' : '')"
+                [attr.aria-label]="seat.seatId + (seat.isBooked ? ' booked' : isSeatSelected(seat.seatId) ? ' selected' : ' available')"
+              >
+                {{ seat.seatId }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #loadingTpl>
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading seat availability…</p>
+        </div>
+      </ng-template>
+
+      <!-- Selected Seats Summary -->
+      <div class="selected-summary" *ngIf="selectedSeats.size > 0">
+        <span class="summary-label">Selected:</span>
+        <span class="seat-chip" *ngFor="let s of selectedSeatList">{{ s }}</span>
+      </div>
+    </div>
+
+    <!-- ── Submit ────────────────────────────────────────────────────────── -->
+    <div class="form-actions">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="isSubmitting || isLoading || bookingForm.invalid || selectedSeats.size === 0"
+      >
+        <span *ngIf="!isSubmitting">
+          {{ editBookingId ? '✏️ Update Booking' : '🎟️ Confirm Booking' }}
+        </span>
+        <span *ngIf="isSubmitting" class="btn-loading">
+          <span class="spinner spinner--sm"></span> Processing…
+        </span>
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- ── Confirmation Popup ──────────────────────────────────────────────────── -->
+<div class="modal-overlay" *ngIf="showConfirmation" (click)="closeConfirmation()">
+  <div class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-icon">🎉</div>
+    <h2 class="modal-title" id="modal-title">Booking Confirmed!</h2>
+    <div class="modal-body" *ngIf="confirmedBooking">
+      <div class="info-row">
+        <span class="info-label">Booking ID</span>
+        <span class="info-value booking-id">#{{ confirmedBooking.bookingId }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Travel Date</span>
+        <span class="info-value">{{ confirmedBooking.travelDate }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Mobile</span>
+        <span class="info-value">{{ confirmedBooking.mobile }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Seats</span>
+        <span class="info-value seats-value">
+          <span class="seat-badge" *ngFor="let s of confirmedBooking.seats">{{ s }}</span>
+        </span>
+      </div>
+    </div>
+    <button class="btn btn-primary" (click)="closeConfirmation()">Done</button>
+  </div>
+</div>

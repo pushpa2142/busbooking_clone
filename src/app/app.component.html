@@ -1,0 +1,42 @@
+<!-- App Shell -->
+<div class="app-shell">
+
+  <!-- ── Top Navigation Bar ──────────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <span class="brand-icon">🚌</span>
+      <span class="brand-name">myPaisaa</span>
+      <span class="brand-tag">Bus Booking</span>
+    </div>
+
+    <div class="navbar-tabs">
+      <button
+        class="nav-tab"
+        [class.nav-tab--active]="isActive('book')"
+        (click)="navigate('/book')"
+      >
+        <span class="tab-icon">🎟️</span>
+        <span class="tab-label">Book Ticket</span>
+      </button>
+
+      <button
+        class="nav-tab"
+        [class.nav-tab--active]="isActive('bookings')"
+        (click)="navigate('/bookings')"
+      >
+        <span class="tab-icon">📋</span>
+        <span class="tab-label">Booking List</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Page Content ────────────────────────────────────────────────────── -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- ── Footer ──────────────────────────────────────────────────────────── -->
+  <footer class="app-footer">
+    <span>© 2024 myPaisaa · Bus Conductor System</span>
+  </footer>
+</div>
