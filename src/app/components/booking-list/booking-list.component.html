@@ -1,0 +1,150 @@
+<!-- Screen 2: Booking List & Boarding Tracking -->
+<div class="page-container">
+  <header class="page-header">
+    <div class="header-icon">📋</div>
+    <div>
+      <h1 class="page-title">Booking List</h1>
+      <p class="page-subtitle">Track boarding status for the selected travel date</p>
+    </div>
+  </header>
+
+  <!-- ── Filter Form ───────────────────────────────────────────────────── -->
+  <form [formGroup]="filterForm" (ngSubmit)="loadBookings()" class="filter-card">
+    <div class="filter-row">
+      <div class="form-group">
+        <label class="form-label" for="filterDate">
+          <span class="label-icon">📅</span> Travel Date
+        </label>
+        <input
+          id="filterDate"
+          type="date"
+          class="form-control"
+          formControlName="travelDate"
+        />
+      </div>
+      <button type="submit" class="btn btn-primary" [disabled]="isLoading || filterForm.invalid">
+        <span *ngIf="!isLoading">🔍 Search</span>
+        <span *ngIf="isLoading" class="btn-loading">
+          <span class="spinner spinner--sm"></span> Loading…
+        </span>
+      </button>
+    </div>
+  </form>
+
+  <!-- ── Error ─────────────────────────────────────────────────────────── -->
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <span>⚠️</span> {{ errorMessage }}
+  </div>
+
+  <!-- ── Stats Cards ───────────────────────────────────────────────────── -->
+  <div class="stats-grid" *ngIf="hasSearched && !isLoading && bookings.length > 0">
+    <div class="stat-card">
+      <div class="stat-value">{{ bookings.length }}</div>
+      <div class="stat-label">Total Bookings</div>
+    </div>
+    <div class="stat-card stat-card--boarded">
+      <div class="stat-value">{{ boardedCount }}</div>
+      <div class="stat-label">Boarded</div>
+    </div>
+    <div class="stat-card stat-card--pending">
+      <div class="stat-value">{{ pendingCount }}</div>
+      <div class="stat-label">Pending</div>
+    </div>
+    <div class="stat-card stat-card--time">
+      <div class="stat-value">{{ formattedBoardingTime }}</div>
+      <div class="stat-label">Optimal Boarding Time</div>
+    </div>
+  </div>
+
+  <!-- ── Algorithm Info Banner ─────────────────────────────────────────── -->
+  <div class="algo-banner" *ngIf="hasSearched && !isLoading && bookings.length > 0">
+    <span class="algo-icon">💡</span>
+    <div class="algo-text">
+      <strong>Optimal Boarding Order</strong> — Passengers are sequenced back-to-front
+      to minimise blocking. Total estimated boarding time:
+      <strong>{{ formattedBoardingTime }}</strong>.
+    </div>
+  </div>
+
+  <!-- ── Booking Table ─────────────────────────────────────────────────── -->
+  <div class="table-wrapper" *ngIf="hasSearched && !isLoading && bookings.length > 0">
+    <table class="booking-table">
+      <thead>
+        <tr>
+          <th class="th-seq">#</th>
+          <th>Booking ID</th>
+          <th>Seat(s)</th>
+          <th class="th-mobile">Mobile</th>
+          <th class="th-status">Status</th>
+          <th class="th-action">Board</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let entry of bookings; trackBy: trackByBookingId"
+          [class.row--boarded]="entry.boarded"
+        >
+          <!-- Sequence -->
+          <td class="td-seq">
+            <span class="seq-badge">{{ entry.sequence }}</span>
+          </td>
+
+          <!-- Booking ID -->
+          <td>
+            <span class="booking-id">#{{ entry.bookingId }}</span>
+          </td>
+
+          <!-- Seats -->
+          <td>
+            <div class="seats-cell">
+              <span class="seat-tag" *ngFor="let seat of entry.seats">{{ seat }}</span>
+            </div>
+          </td>
+
+          <!-- Mobile (click to call) -->
+          <td class="td-mobile">
+            <button
+              class="call-btn"
+              (click)="callMobile(entry.mobile)"
+              [title]="'Call ' + entry.mobile"
+              [attr.aria-label]="'Call ' + entry.mobile"
+            >
+              📱
+            </button>
+          </td>
+
+          <!-- Boarding Status -->
+          <td class="td-status">
+            <span class="status-badge" [class.status-badge--boarded]="entry.boarded" [class.status-badge--pending]="!entry.boarded">
+              {{ entry.boarded ? '✅ Boarded' : '⏳ Pending' }}
+            </span>
+          </td>
+
+          <!-- Board Action -->
+          <td class="td-action">
+            <button
+              *ngIf="!entry.boarded"
+              class="btn btn-board"
+              (click)="markBoarded(entry.bookingId)"
+              [disabled]="isMarkingBoardedFor(entry.bookingId)"
+              [title]="'Mark as boarded'"
+            >
+              <span *ngIf="!isMarkingBoardedFor(entry.bookingId)">Mark Boarded</span>
+              <span *ngIf="isMarkingBoardedFor(entry.bookingId)" class="btn-loading">
+                <span class="spinner spinner--sm"></span>
+              </span>
+            </button>
+            <span class="boarded-check" *ngIf="entry.boarded">✔</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Empty State ────────────────────────────────────────────────────── -->
+  <div class="empty-state" *ngIf="hasSearched && !isLoading && bookings.length === 0">
+    <div class="empty-icon">🚌</div>
+    <h3 class="empty-title">No bookings found</h3>
+    <p class="empty-subtitle">No tickets have been booked for this travel date yet.</p>
+  </div>
+</div>
